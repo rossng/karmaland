@@ -13,6 +13,7 @@ contract Karma {
     ) {
         karmaMaster = _karmaMaster;
         isCitizen[karmaMaster] = true;
+        balanceOf[karmaMaster] = 101;
         citizens.push(karmaMaster);
     }
 
@@ -26,6 +27,7 @@ contract Karma {
         require(msg.sender == karmaMaster);
         require(!isCitizen[_citizen]);
         isCitizen[_citizen] = true;
+        balanceOf[_citizen] = 101;
         citizens.push(_citizen);
     }
 
@@ -33,8 +35,12 @@ contract Karma {
         return citizens;
     }
 
+    function getKarma(address _citizen) returns(uint256) {
+        return balanceOf[_citizen];
+    }
+
     /* Send coins */
-    function transfer(address _to, uint256 _value) {
+    function transfer(address _to, uint256 _value) public {
         require(isCitizen[msg.sender]);
         require(isCitizen[_to]);
         require(balanceOf[msg.sender] >= _value);           // Check if the sender has enough

@@ -55,6 +55,7 @@ App = {
     bindEvents: function () {
         //$(document).on('click', '.btn-adopt', App.handleAdopt);
         $(document).on('click', '.btn-add-citizen', App.addCitizen);
+        $(document).on('click', '.btn-give-karma', App.giveKarma);
     },
 
     getCitizens: function (account) {
@@ -63,6 +64,34 @@ App = {
             return karmaInstance.getCitizens.call();
         }).then(function (citizens) {
             console.log(citizens);
+            citizens.forEach(function (citizen) {
+                console.log(citizen);
+                $('form#list-citizens').append('<input type="radio" name="citizens" value="' + citizen + '" />' + citizen + '<br />');
+                console.log(App.getKarma(citizen));
+            });
+        });
+    },
+
+    getKarma: function (citizenId) {
+        var karma = 0;
+
+        web3.eth.getAccounts(function (error, accounts) {
+            if (error) {
+                console.log(error);
+            }
+
+            var account = accounts[0];
+
+            App.contracts.Karma.deployed().then(function (instance) {
+                karmaInstance = instance;
+                return karmaInstance.getKarma.call(citizenId);
+            }).then(function (result) {
+                console.log('Citizen ' + citizenId + ' has ' + result.c[0] + ' karma');
+                $('form#list-citizens input[value="' + citizenId + '"]').after('<strong>' + result.c[0] + ' - </strong>');
+                return result;
+            }).catch(function (err) {
+                console.log(err.message);
+            });
         });
     },
 
@@ -84,6 +113,31 @@ App = {
                 return karmaInstance.makeCitizen(citizenId, {from: account});
             }).then(function (result) {
                 console.log('Added citizen with address ' + citizenId);
+            }).catch(function (err) {
+                console.log(err.message);
+            });
+        });
+    },
+
+    giveKarma: function() {
+        event.preventDefault();
+
+        var citizenId = $('input[name="citizens"]:checked').val();
+        var amount = $('#input-give-karma').val();
+        console.log('Sending ' + amount + ' karma to citizen with address ' + citizenId);
+
+        web3.eth.getAccounts(function (error, accounts) {
+            if (error) {
+                console.log(error);
+            }
+
+            var account = accounts[0];
+
+            App.contracts.Karma.deployed().then(function (instance) {
+                karmaInstance = instance;
+                return karmaInstance.transfer(citizenId, amount, {from: account});
+            }).then(function (result) {
+                console.log('Sent karma');
             }).catch(function (err) {
                 console.log(err.message);
             });
